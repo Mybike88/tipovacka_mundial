@@ -399,7 +399,7 @@
     <h1>MS 2026 – Tipovací tabulka</h1>
     <p>Skupinová fáze · USA, Kanada, Mexiko · 11.–27. června 2026</p>
   </div>
-  <button class="btn-score" onclick="saveScores()" style="margin-left:auto">🔄 Aktualizovat skóre</button>
+  <button class="btn-score" id="btnFetch" onclick="fetchResults()" style="margin-left:auto">⬇️ Stáhnout výsledky</button>
 </header>
 
 <div class="save-banner" id="saveBanner">✓ Tipy uloženy</div>
@@ -848,6 +848,104 @@ function updateStats() {
       '<span class="blue">✓ ' + s.result + '× výsledek = ' + s.result + ' b</span>';
     document.getElementById('lbp-' + i).innerHTML = s.total + '<small>b</small>';
   });
+}
+
+// --- Fetch results from ESPN ---
+const TEAM_MAP = {
+  'Mexico': 'Mexiko', 'South Africa': 'Jihoafrická republika',
+  'South Korea': 'Jižní Korea', 'Korea Republic': 'Jižní Korea',
+  'Czechia': 'Česko', 'Czech Republic': 'Česko',
+  'Canada': 'Kanada', 'Bosnia and Herzegovina': 'Bosna a Hercegovina',
+  'Qatar': 'Katar', 'Switzerland': 'Švýcarsko',
+  'Brazil': 'Brazílie', 'Morocco': 'Maroko', 'Haiti': 'Haiti', 'Scotland': 'Skotsko',
+  'United States': 'USA', 'USA': 'USA',
+  'Paraguay': 'Paraguay', 'Australia': 'Austrálie',
+  'Turkey': 'Turecko', 'Türkiye': 'Turecko',
+  'Germany': 'Německo', "Cote d'Ivoire": 'Pobřeží slonoviny', 'Ivory Coast': 'Pobřeží slonoviny',
+  'Ecuador': 'Ekvádor', 'Curacao': 'Curaçao', 'Curaçao': 'Curaçao',
+  'Netherlands': 'Nizozemsko', 'Sweden': 'Švédsko', 'Tunisia': 'Tunisko', 'Japan': 'Japonsko',
+  'Belgium': 'Belgie', 'Egypt': 'Egypt', 'Iran': 'Írán', 'New Zealand': 'Nový Zéland',
+  'Spain': 'Španělsko', 'Cape Verde': 'Kapverdy', 'Saudi Arabia': 'Saúdská Arábie', 'Uruguay': 'Uruguay',
+  'France': 'Francie', 'Senegal': 'Senegal', 'Iraq': 'Irák', 'Norway': 'Norsko',
+  'Argentina': 'Argentina', 'Algeria': 'Alžírsko', 'Austria': 'Rakousko', 'Jordan': 'Jordánsko',
+  'Portugal': 'Portugalsko', 'DR Congo': 'DR Kongo', 'Congo DR': 'DR Kongo',
+  'Uzbekistan': 'Uzbekistán', 'Colombia': 'Kolumbie',
+  'England': 'Anglie', 'Croatia': 'Chorvatsko', 'Ghana': 'Ghana', 'Panama': 'Panama',
+};
+
+function mapTeam(name) {
+  return TEAM_MAP[name] || name;
+}
+
+function getUniqueDates() {
+  const seen = new Set();
+  const dates = [];
+  GROUPS.forEach(g => g.matches.forEach(m => {
+    const parts = m.date.split('.').filter(p => p !== '');
+    const day = parseInt(parts[0]), month = parseInt(parts[1]);
+    const d = new Date(2026, month - 1, day);
+    if (d <= new Date()) {
+      const key = `2026${String(month).padStart(2,'0')}${String(day).padStart(2,'0')}`;
+      if (!seen.has(key)) { seen.add(key); dates.push(key); }
+    }
+  }));
+  return dates;
+}
+
+async function fetchResults() {
+  const btn = document.getElementById('btnFetch');
+  btn.disabled = true;
+  btn.textContent = '⏳ Stahuji...';
+
+  const dates = getUniqueDates();
+  if (dates.length === 0) {
+    btn.textContent = '⬇️ Stáhnout výsledky';
+    btn.disabled = false;
+    showBanner('Žádné odehrané zápasy zatím.');
+    return;
+  }
+
+  let updated = 0;
+  try {
+    for (const date of dates) {
+      const res = await fetch(`https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=${date}`);
+      const data = await res.json();
+      const events = data.events || [];
+      events.forEach(event => {
+        const comp = event.competitions[0];
+        if (!comp.status.type.completed) return;
+        const home = comp.competitors.find(c => c.homeAway === 'home');
+        const away = comp.competitors.find(c => c.homeAway === 'away');
+        if (!home || !away) return;
+        const homeCZ = mapTeam(home.team.displayName);
+        const awayCZ = mapTeam(away.team.displayName);
+        const scoreStr = `${home.score}:${away.score}`;
+        // najdi zápas podle týmů
+        GROUPS.forEach(g => g.matches.forEach(m => {
+          if (m.home === homeCZ && m.away === awayCZ) {
+            const inp = document.getElementById(`score_${m.id}`);
+            if (inp) inp.value = scoreStr;
+            localStorage.setItem(`score_${m.id}`, scoreStr);
+            updated++;
+          }
+        }));
+      });
+    }
+    showBanner(`✓ Staženo ${updated} výsledků`);
+    updateStats();
+  } catch (e) {
+    showBanner('❌ Chyba při stahování. Zkus to znovu.');
+  }
+
+  btn.textContent = '⬇️ Stáhnout výsledky';
+  btn.disabled = false;
+}
+
+function showBanner(msg) {
+  const banner = document.getElementById('saveBanner');
+  banner.textContent = msg;
+  banner.classList.add('show');
+  setTimeout(() => banner.classList.remove('show'), 3000);
 }
 
 // --- Init ---
