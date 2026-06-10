@@ -402,7 +402,7 @@
         <span class="lb-pts-total" id="lbp-2">0<small>b</small></span>
       </div>
       <div class="lb-entry" id="lbe-3">
-        <span class="lb-medal" id="lbm-3"></span>
+        <span class="lb-medal" id="lbm-3">🥔</span>
         <span class="lb-entry-name" id="lbn-3">Honza</span>
         <span class="lb-detail-text" id="lbd-3"><span class="gold">⭐ 0× přesné = 0 b</span><br><span class="blue">✓ 0× výsledek = 0 b</span></span>
         <span class="lb-pts-total" id="lbp-3">0<small>b</small></span>
@@ -806,7 +806,7 @@ function updateStats() {
   const scores = TIPPERS.map(tipper => ({ tipper, ...calcPoints(tipper) }));
   scores.sort((a, b) => b.total - a.total || TIPPER_LABELS[a.tipper].localeCompare(TIPPER_LABELS[b.tipper], 'cs'));
 
-  const MEDALS = ['🥇', '🥈', '🥉'];
+  const MEDALS = ['🥇', '🥈', '🥉', '🥔'];
   scores.forEach((s, i) => {
     document.getElementById('lbe-' + i).className = 'lb-entry' + (i === 0 ? ' first-place' : '');
     document.getElementById('lbm-' + i).textContent = MEDALS[i] || '';
