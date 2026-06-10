@@ -903,17 +903,8 @@ function getUniqueDates() {
 }
 
 async function fetchResults() {
-  const btn = document.getElementById('btnFetch');
-  btn.disabled = true;
-  btn.textContent = '⏳ Stahuji...';
-
   const dates = getUniqueDates();
-  if (dates.length === 0) {
-    btn.textContent = '⬇️ Stáhnout výsledky';
-    btn.disabled = false;
-    showBanner('Žádné odehrané zápasy zatím.');
-    return;
-  }
+  if (dates.length === 0) return;
 
   let updated = 0;
   try {
@@ -930,7 +921,6 @@ async function fetchResults() {
         const homeCZ = mapTeam(home.team.displayName);
         const awayCZ = mapTeam(away.team.displayName);
         const scoreStr = `${home.score}:${away.score}`;
-        // najdi zápas podle týmů
         GROUPS.forEach(g => g.matches.forEach(m => {
           if (m.home === homeCZ && m.away === awayCZ) {
             const inp = document.getElementById(`score_${m.id}`);
@@ -942,14 +932,10 @@ async function fetchResults() {
       });
     }
     if (updated > 0) await pushRemoteData();
-    showBanner(`✓ Staženo ${updated} výsledků`);
     updateStats();
   } catch (e) {
-    showBanner('❌ Chyba při stahování. Zkus to znovu.');
+    // tiché selhání — výsledky nejsou kritické pro tipování
   }
-
-  btn.textContent = '⬇️ Stáhnout výsledky';
-  btn.disabled = false;
 }
 
 function showBanner(msg) {
