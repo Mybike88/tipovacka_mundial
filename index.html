@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MS 2026 – Tipy na zápasy</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0a1628;
+      color: #e8eaf0;
+      min-height: 100vh;
+    }
+
+    header {
+      background: linear-gradient(135deg, #1a3a6b 0%, #0d2244 100%);
+      border-bottom: 3px solid #c9a227;
+      padding: 20px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    }
+
+    header .trophy { font-size: 2rem; }
+
+    header h1 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #c9a227;
+      letter-spacing: 0.5px;
+    }
+
+    header p {
+      font-size: 0.8rem;
+      color: #8899bb;
+      margin-top: 2px;
+    }
+
+    .save-banner {
+      background: #1a3a2a;
+      border: 1px solid #2d6b3a;
+      color: #5cb85c;
+      text-align: center;
+      padding: 8px;
+      font-size: 0.82rem;
+      display: none;
+    }
+
+    .save-banner.show { display: block; }
+
+    main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 24px 16px 48px;
+    }
+
+    .group-block {
+      margin-bottom: 36px;
+    }
+
+    .group-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .group-label {
+      background: #c9a227;
+      color: #0a1628;
+      font-weight: 800;
+      font-size: 0.85rem;
+      padding: 4px 12px;
+      border-radius: 4px;
+      letter-spacing: 1px;
+    }
+
+    .group-teams {
+      font-size: 0.8rem;
+      color: #6e85a8;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #111e35;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.4);
+    }
+
+    thead tr {
+      background: #162847;
+    }
+
+    thead th {
+      padding: 10px 12px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: #7a9cc8;
+      text-align: left;
+    }
+
+    thead th.tip-col {
+      text-align: center;
+      min-width: 100px;
+    }
+
+    thead th.tip-col span {
+      display: block;
+      color: #c9a227;
+      font-size: 0.92rem;
+      font-weight: 700;
+      text-transform: none;
+      letter-spacing: 0;
+    }
+
+    tbody tr {
+      border-top: 1px solid #1c2f4a;
+      transition: background 0.15s;
+    }
+
+    tbody tr:hover { background: #162240; }
+
+    td {
+      padding: 9px 12px;
+      font-size: 0.88rem;
+      vertical-align: middle;
+    }
+
+    td.match-num {
+      color: #3d5a80;
+      font-size: 0.75rem;
+      width: 32px;
+    }
+
+    td.match-teams {
+      font-weight: 600;
+      color: #d0ddf0;
+      white-space: nowrap;
+    }
+
+    td.match-teams .vs {
+      color: #c9a227;
+      font-weight: 400;
+      font-size: 0.78rem;
+      margin: 0 6px;
+    }
+
+    td.match-date {
+      font-size: 0.8rem;
+      color: #d0ddf0;
+      white-space: nowrap;
+    }
+
+    td.match-date .match-time {
+      display: block;
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: #c9a227;
+    }
+
+    td.tip-cell {
+      text-align: center;
+      vertical-align: middle;
+    }
+
+    td.tip-cell .tip-name {
+      display: block;
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: #c9a227;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+
+    td.tip-cell input {
+      width: 72px;
+      background: #0d1f38;
+      border: 1px solid #253d60;
+      border-radius: 6px;
+      color: #e0ecff;
+      font-size: 0.9rem;
+      font-weight: 600;
+      padding: 5px 8px;
+      text-align: center;
+      outline: none;
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    td.tip-cell input:focus {
+      border-color: #c9a227;
+      background: #152640;
+    }
+
+    td.tip-cell input::placeholder {
+      color: #2d4a6b;
+      font-weight: 400;
+    }
+
+    td.tip-cell input.filled {
+      border-color: #2d6b3a;
+      color: #7dda8a;
+    }
+
+.btn-save {
+      background: linear-gradient(135deg, #c9a227, #a07c18);
+      color: #0a1628;
+      border: none;
+      padding: 10px 24px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      margin-left: auto;
+      display: block;
+      margin-top: 16px;
+      transition: opacity 0.2s;
+    }
+
+    .btn-save:hover { opacity: 0.85; }
+
+    .btn-score {
+      background: linear-gradient(135deg, #2a6b4a, #1a4a32);
+      color: #7dda8a;
+      border: 1px solid #3d8a5a;
+      padding: 8px 20px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: opacity 0.2s;
+      white-space: nowrap;
+    }
+
+    .btn-score:hover { opacity: 0.85; }
+
+    thead th.score-col {
+      text-align: center;
+      min-width: 80px;
+      color: #7dda8a;
+    }
+
+    td.score-cell {
+      text-align: center;
+    }
+
+    td.score-cell input {
+      width: 66px;
+      background: #0d2218;
+      border: 1px solid #2a5a38;
+      border-radius: 6px;
+      color: #7dda8a;
+      font-size: 0.95rem;
+      font-weight: 700;
+      padding: 5px 6px;
+      text-align: center;
+      outline: none;
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    td.score-cell input:focus {
+      border-color: #5dba6a;
+      background: #0a2a18;
+    }
+
+    td.score-cell input::placeholder {
+      color: #1d4a28;
+      font-weight: 400;
+    }
+
+    /* --- Leaderboard --- */
+    .lb-section {
+      background: #111e35;
+      border: 1px solid #1c2f4a;
+      border-radius: 10px;
+      margin-bottom: 24px;
+      overflow: hidden;
+    }
+
+    .lb-title {
+      background: #162847;
+      padding: 10px 18px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #7a9cc8;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .lb-title .scoring-rules {
+      display: flex;
+      gap: 14px;
+      margin-left: auto;
+      flex-wrap: wrap;
+    }
+
+    .lb-title .rule {
+      font-size: 0.78rem;
+      font-weight: 400;
+      text-transform: none;
+      letter-spacing: 0;
+      color: #6e85a8;
+    }
+
+    .lb-title .rule strong { color: #c9a227; }
+    .lb-title .rule b { color: #7a9cc8; }
+
+    .lb-rows { display: flex; flex-direction: column; }
+
+    .lb-entry {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 12px 18px;
+      border-top: 1px solid #1c2f4a;
+    }
+
+    .lb-entry:first-child { border-top: none; }
+    .lb-entry.first-place { background: #131f0e; }
+
+    .lb-medal { font-size: 1.3rem; width: 28px; text-align: center; flex-shrink: 0; }
+
+    .lb-entry-name {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #d0ddf0;
+      flex: 1;
+    }
+
+    .lb-pts-total {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: #c9a227;
+    }
+
+    .lb-pts-total small {
+      font-size: 0.75rem;
+      font-weight: 400;
+      color: #5a7098;
+      margin-left: 2px;
+    }
+
+    .lb-detail-text {
+      font-size: 0.76rem;
+      color: #4e6585;
+      text-align: right;
+      line-height: 1.6;
+      min-width: 160px;
+    }
+
+    .lb-detail-text .gold { color: #c9a227; font-weight: 600; }
+    .lb-detail-text .blue { color: #7a9cc8; font-weight: 600; }
+
+    tr.locked td.tip-cell input {
+      background: #0d1525;
+      border-color: #1a2a40;
+      color: #3d5070;
+      cursor: not-allowed;
+    }
+
+    tr.locked td.tip-cell input::placeholder { color: #1d2e45; }
+
+    .lock-badge {
+      display: inline-block;
+      font-size: 0.7rem;
+      background: #1a2a40;
+      color: #3d5a80;
+      border-radius: 4px;
+      padding: 1px 5px;
+      margin-top: 3px;
+      white-space: nowrap;
+    }
+
+    @media (max-width: 700px) {
+      thead th.tip-col { min-width: 70px; }
+      td.tip-cell input { width: 58px; font-size: 0.82rem; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="trophy">⚽</div>
+  <div>
+    <h1>MS 2026 – Tipovací tabulka</h1>
+    <p>Skupinová fáze · USA, Kanada, Mexiko · 11.–27. června 2026</p>
+  </div>
+  <button class="btn-score" onclick="saveScores()" style="margin-left:auto">🔄 Aktualizovat skóre</button>
+</header>
+
+<div class="save-banner" id="saveBanner">✓ Tipy uloženy</div>
+
+<main>
+  <div class="lb-section">
+    <div class="lb-title">
+      Pořadí
+      <span class="scoring-rules">
+        <span class="rule"><strong>+3 b</strong> přesné skóre (např. 2:1 = 2:1)</span>
+        <span class="rule"><b>+1 b</b> správný výsledek (výhra / remíza / prohra)</span>
+      </span>
+    </div>
+    <div class="lb-rows" id="lb-rows">
+      <div class="lb-entry" id="lbe-0">
+        <span class="lb-medal" id="lbm-0">🥇</span>
+        <span class="lb-entry-name" id="lbn-0">Petr</span>
+        <span class="lb-detail-text" id="lbd-0"><span class="gold">⭐ 0× přesné = 0 b</span><br><span class="blue">✓ 0× výsledek = 0 b</span></span>
+        <span class="lb-pts-total" id="lbp-0">0<small>b</small></span>
+      </div>
+      <div class="lb-entry" id="lbe-1">
+        <span class="lb-medal" id="lbm-1">🥈</span>
+        <span class="lb-entry-name" id="lbn-1">Pája</span>
+        <span class="lb-detail-text" id="lbd-1"><span class="gold">⭐ 0× přesné = 0 b</span><br><span class="blue">✓ 0× výsledek = 0 b</span></span>
+        <span class="lb-pts-total" id="lbp-1">0<small>b</small></span>
+      </div>
+      <div class="lb-entry" id="lbe-2">
+        <span class="lb-medal" id="lbm-2">🥉</span>
+        <span class="lb-entry-name" id="lbn-2">Mybike</span>
+        <span class="lb-detail-text" id="lbd-2"><span class="gold">⭐ 0× přesné = 0 b</span><br><span class="blue">✓ 0× výsledek = 0 b</span></span>
+        <span class="lb-pts-total" id="lbp-2">0<small>b</small></span>
+      </div>
+      <div class="lb-entry" id="lbe-3">
+        <span class="lb-medal" id="lbm-3"></span>
+        <span class="lb-entry-name" id="lbn-3">Honza</span>
+        <span class="lb-detail-text" id="lbd-3"><span class="gold">⭐ 0× přesné = 0 b</span><br><span class="blue">✓ 0× výsledek = 0 b</span></span>
+        <span class="lb-pts-total" id="lbp-3">0<small>b</small></span>
+      </div>
+    </div>
+  </div>
+
+
+  <div id="groups-container"></div>
+
+  <button class="btn-save" onclick="saveAll()">💾 Uložit všechny tipy</button>
+</main>
+
+<script>
+const TIPPERS = ['mybike', 'pája', 'petr', 'honza'];
+const TIPPER_LABELS = { 'mybike': 'Mybike', 'pája': 'Pája', 'petr': 'Petr', 'honza': 'Honza' };
+
+const GROUPS = [
+  {
+    name: 'A',
+    teams: ['Mexiko', 'Jižní Korea', 'Česko', 'Jihoafrická republika'],
+    matches: [
+      { id: 'A1', home: 'Mexiko',              away: 'Jihoafrická republika', date: '11.6.', time: '21:00' },
+      { id: 'A2', home: 'Jižní Korea',         away: 'Česko',                date: '12.6.', time: '04:00' },
+      { id: 'A3', home: 'Česko',               away: 'Jihoafrická republika', date: '18.6.', time: '18:00' },
+      { id: 'A4', home: 'Mexiko',              away: 'Jižní Korea',          date: '19.6.', time: '03:00' },
+      { id: 'A5', home: 'Česko',               away: 'Mexiko',               date: '25.6.', time: '03:00' },
+      { id: 'A6', home: 'Jihoafrická republika', away: 'Jižní Korea',        date: '25.6.', time: '03:00' },
+    ]
+  },
+  {
+    name: 'B',
+    teams: ['Kanada', 'Bosna a Hercegovina', 'Katar', 'Švýcarsko'],
+    matches: [
+      { id: 'B1', home: 'Kanada',              away: 'Bosna a Hercegovina',  date: '12.6.', time: '21:00' },
+      { id: 'B2', home: 'Katar',               away: 'Švýcarsko',            date: '13.6.', time: '21:00' },
+      { id: 'B3', home: 'Švýcarsko',           away: 'Bosna a Hercegovina',  date: '18.6.', time: '21:00' },
+      { id: 'B4', home: 'Kanada',              away: 'Katar',                date: '19.6.', time: '00:00' },
+      { id: 'B5', home: 'Švýcarsko',           away: 'Kanada',               date: '24.6.', time: '21:00' },
+      { id: 'B6', home: 'Bosna a Hercegovina', away: 'Katar',                date: '24.6.', time: '21:00' },
+    ]
+  },
+  {
+    name: 'C',
+    teams: ['Brazílie', 'Maroko', 'Haiti', 'Skotsko'],
+    matches: [
+      { id: 'C1', home: 'Brazílie', away: 'Maroko',   date: '14.6.', time: '00:00' },
+      { id: 'C2', home: 'Haiti',    away: 'Skotsko',  date: '14.6.', time: '03:00' },
+      { id: 'C3', home: 'Skotsko',  away: 'Maroko',   date: '20.6.', time: '00:00' },
+      { id: 'C4', home: 'Brazílie', away: 'Haiti',    date: '20.6.', time: '02:30' },
+      { id: 'C5', home: 'Skotsko',  away: 'Brazílie', date: '25.6.', time: '00:00' },
+      { id: 'C6', home: 'Maroko',   away: 'Haiti',    date: '25.6.', time: '00:00' },
+    ]
+  },
+  {
+    name: 'D',
+    teams: ['USA', 'Paraguay', 'Austrálie', 'Turecko'],
+    matches: [
+      { id: 'D1', home: 'USA',       away: 'Paraguay',   date: '13.6.', time: '03:00' },
+      { id: 'D2', home: 'Austrálie', away: 'Turecko',    date: '14.6.', time: '06:00' },
+      { id: 'D3', home: 'USA',       away: 'Austrálie',  date: '19.6.', time: '21:00' },
+      { id: 'D4', home: 'Turecko',   away: 'Paraguay',   date: '20.6.', time: '05:00' },
+      { id: 'D5', home: 'Turecko',   away: 'USA',        date: '26.6.', time: '04:00' },
+      { id: 'D6', home: 'Paraguay',  away: 'Austrálie',  date: '26.6.', time: '04:00' },
+    ]
+  },
+  {
+    name: 'E',
+    teams: ['Německo', 'Pobřeží slonoviny', 'Ekvádor', 'Curaçao'],
+    matches: [
+      { id: 'E1', home: 'Německo',           away: 'Curaçao',           date: '14.6.', time: '19:00' },
+      { id: 'E2', home: 'Pobřeží slonoviny', away: 'Ekvádor',           date: '15.6.', time: '01:00' },
+      { id: 'E3', home: 'Německo',           away: 'Pobřeží slonoviny', date: '20.6.', time: '22:00' },
+      { id: 'E4', home: 'Ekvádor',           away: 'Curaçao',           date: '21.6.', time: '02:00' },
+      { id: 'E5', home: 'Ekvádor',           away: 'Německo',           date: '25.6.', time: '22:00' },
+      { id: 'E6', home: 'Curaçao',           away: 'Pobřeží slonoviny', date: '25.6.', time: '22:00' },
+    ]
+  },
+  {
+    name: 'F',
+    teams: ['Nizozemsko', 'Švédsko', 'Tunisko', 'Japonsko'],
+    matches: [
+      { id: 'F1', home: 'Nizozemsko', away: 'Japonsko',  date: '14.6.', time: '22:00' },
+      { id: 'F2', home: 'Švédsko',    away: 'Tunisko',   date: '15.6.', time: '04:00' },
+      { id: 'F3', home: 'Nizozemsko', away: 'Švédsko',   date: '20.6.', time: '19:00' },
+      { id: 'F4', home: 'Tunisko',    away: 'Japonsko',  date: '21.6.', time: '06:00' },
+      { id: 'F5', home: 'Tunisko',    away: 'Nizozemsko', date: '26.6.', time: '01:00' },
+      { id: 'F6', home: 'Japonsko',   away: 'Švédsko',   date: '26.6.', time: '01:00' },
+    ]
+  },
+  {
+    name: 'G',
+    teams: ['Belgie', 'Egypt', 'Írán', 'Nový Zéland'],
+    matches: [
+      { id: 'G1', home: 'Írán',       away: 'Nový Zéland', date: '15.6.', time: '03:00' },
+      { id: 'G2', home: 'Belgie',     away: 'Egypt',       date: '15.6.', time: '21:00' },
+      { id: 'G3', home: 'Belgie',     away: 'Írán',        date: '21.6.', time: '21:00' },
+      { id: 'G4', home: 'Nový Zéland', away: 'Egypt',      date: '22.6.', time: '03:00' },
+      { id: 'G5', home: 'Nový Zéland', away: 'Belgie',     date: '27.6.', time: '05:00' },
+      { id: 'G6', home: 'Egypt',      away: 'Írán',        date: '27.6.', time: '05:00' },
+    ]
+  },
+  {
+    name: 'H',
+    teams: ['Španělsko', 'Kapverdy', 'Saúdská Arábie', 'Uruguay'],
+    matches: [
+      { id: 'H1', home: 'Španělsko',      away: 'Kapverdy',       date: '15.6.', time: '18:00' },
+      { id: 'H2', home: 'Saúdská Arábie', away: 'Uruguay',        date: '16.6.', time: '00:00' },
+      { id: 'H3', home: 'Španělsko',      away: 'Saúdská Arábie', date: '21.6.', time: '18:00' },
+      { id: 'H4', home: 'Uruguay',        away: 'Kapverdy',       date: '22.6.', time: '00:00' },
+      { id: 'H5', home: 'Uruguay',        away: 'Španělsko',      date: '27.6.', time: '02:00' },
+      { id: 'H6', home: 'Kapverdy',       away: 'Saúdská Arábie', date: '27.6.', time: '02:00' },
+    ]
+  },
+  {
+    name: 'I',
+    teams: ['Francie', 'Senegal', 'Irák', 'Norsko'],
+    matches: [
+      { id: 'I1', home: 'Francie',  away: 'Senegal',  date: '15.6.', time: '21:00' },
+      { id: 'I2', home: 'Irák',     away: 'Norsko',   date: '16.6.', time: '00:00' },
+      { id: 'I3', home: 'Francie',  away: 'Irák',     date: '22.6.', time: '23:00' },
+      { id: 'I4', home: 'Norsko',   away: 'Senegal',  date: '23.6.', time: '02:00' },
+      { id: 'I5', home: 'Norsko',   away: 'Francie',  date: '26.6.', time: '21:00' },
+      { id: 'I6', home: 'Senegal',  away: 'Irák',     date: '26.6.', time: '21:00' },
+    ]
+  },
+  {
+    name: 'J',
+    teams: ['Argentina', 'Alžírsko', 'Rakousko', 'Jordánsko'],
+    matches: [
+      { id: 'J1', home: 'Argentina', away: 'Alžírsko',  date: '16.6.', time: '03:00' },
+      { id: 'J2', home: 'Rakousko',  away: 'Jordánsko', date: '16.6.', time: '06:00' },
+      { id: 'J3', home: 'Argentina', away: 'Rakousko',  date: '22.6.', time: '19:00' },
+      { id: 'J4', home: 'Jordánsko', away: 'Alžírsko',  date: '23.6.', time: '05:00' },
+      { id: 'J5', home: 'Jordánsko', away: 'Argentina', date: '28.6.', time: '04:00' },
+      { id: 'J6', home: 'Alžírsko',  away: 'Rakousko',  date: '28.6.', time: '04:00' },
+    ]
+  },
+  {
+    name: 'K',
+    teams: ['Portugalsko', 'DR Kongo', 'Uzbekistán', 'Kolumbie'],
+    matches: [
+      { id: 'K1', home: 'Portugalsko', away: 'DR Kongo',   date: '16.6.', time: '19:00' },
+      { id: 'K2', home: 'Uzbekistán',  away: 'Kolumbie',   date: '18.6.', time: '04:00' },
+      { id: 'K3', home: 'Portugalsko', away: 'Uzbekistán', date: '23.6.', time: '19:00' },
+      { id: 'K4', home: 'Kolumbie',    away: 'DR Kongo',   date: '24.6.', time: '04:00' },
+      { id: 'K5', home: 'Kolumbie',    away: 'Portugalsko', date: '28.6.', time: '01:30' },
+      { id: 'K6', home: 'DR Kongo',    away: 'Uzbekistán', date: '28.6.', time: '01:30' },
+    ]
+  },
+  {
+    name: 'L',
+    teams: ['Anglie', 'Chorvatsko', 'Ghana', 'Panama'],
+    matches: [
+      { id: 'L1', home: 'Anglie',     away: 'Chorvatsko', date: '16.6.', time: '22:00' },
+      { id: 'L2', home: 'Ghana',      away: 'Panama',     date: '18.6.', time: '01:00' },
+      { id: 'L3', home: 'Anglie',     away: 'Ghana',      date: '23.6.', time: '22:00' },
+      { id: 'L4', home: 'Panama',     away: 'Chorvatsko', date: '24.6.', time: '01:00' },
+      { id: 'L5', home: 'Panama',     away: 'Anglie',     date: '27.6.', time: '23:00' },
+      { id: 'L6', home: 'Chorvatsko', away: 'Ghana',      date: '27.6.', time: '23:00' },
+    ]
+  },
+];
+
+// --- Build DOM ---
+function buildTable(group) {
+  const block = document.createElement('div');
+  block.className = 'group-block';
+
+  block.innerHTML = `
+    <div class="group-header">
+      <span class="group-label">SKUPINA ${group.name}</span>
+      <span class="group-teams">${group.teams.join(' · ')}</span>
+    </div>
+  `;
+
+  const table = document.createElement('table');
+  table.innerHTML = `
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Zápas</th>
+        <th>Datum / Čas (SELČ)</th>
+        <th class="score-col">Skóre</th>
+        ${TIPPERS.map(t => `<th class="tip-col"><span>${TIPPER_LABELS[t]}</span></th>`).join('')}
+      </tr>
+    </thead>
+  `;
+
+  const tbody = document.createElement('tbody');
+  group.matches.forEach((match, idx) => {
+    const tr = document.createElement('tr');
+    tr.id = `row_${match.id}`;
+    tr.innerHTML = `
+      <td class="match-num">${group.name}${idx + 1}</td>
+      <td class="match-teams">${match.home}<span class="vs">vs</span>${match.away}</td>
+      <td class="match-date">${match.date}<span class="match-time">${match.time}</span></td>
+      <td class="score-cell">
+        <input
+          type="text"
+          maxlength="5"
+          placeholder="–:–"
+          id="score_${match.id}"
+          data-match="${match.id}"
+          autocomplete="off"
+          oninput="handleScoreInput(this)"
+        />
+      </td>
+      ${TIPPERS.map(tipper => `
+        <td class="tip-cell">
+          <input
+            type="text"
+            maxlength="5"
+            placeholder="0:0"
+            id="tip_${match.id}_${tipper}"
+            data-match="${match.id}"
+            data-tipper="${tipper}"
+            autocomplete="off"
+            oninput="handleInput(this)"
+          />
+        </td>
+      `).join('')}
+    `;
+    tbody.appendChild(tr);
+  });
+
+  table.appendChild(tbody);
+  block.appendChild(table);
+  return block;
+}
+
+function renderAll() {
+  const container = document.getElementById('groups-container');
+  GROUPS.forEach(g => container.appendChild(buildTable(g)));
+}
+
+// --- Lock logic ---
+function matchKickoff(match) {
+  // date format "11.6.", time "21:00" — interpreted as SELČ (local CZ time)
+  const parts = match.date.split('.').filter(p => p !== '');
+  const [day, month] = parts.map(Number);
+  const [hour, minute] = match.time.split(':').map(Number);
+  return new Date(2026, month - 1, day, hour, minute, 0);
+}
+
+function isLocked(match) {
+  return Date.now() >= matchKickoff(match).getTime() - 5 * 60 * 1000;
+}
+
+function applyLocks() {
+  GROUPS.forEach(g => {
+    g.matches.forEach(match => {
+      const locked = isLocked(match);
+      const tr = document.getElementById(`row_${match.id}`);
+      if (!tr) return;
+      tr.classList.toggle('locked', locked);
+      TIPPERS.forEach(tipper => {
+        const inp = document.getElementById(`tip_${match.id}_${tipper}`);
+        if (inp) inp.disabled = locked;
+      });
+      // badge v date buňce
+      const badge = tr.querySelector('.lock-badge');
+      if (locked && !badge) {
+        tr.querySelector('.match-date').insertAdjacentHTML('beforeend', '<span class="lock-badge">🔒 uzamčeno</span>');
+      } else if (!locked && badge) {
+        badge.remove();
+      }
+    });
+  });
+}
+
+// --- Storage ---
+function storageKey(matchId, tipper) {
+  return `ms2026_${matchId}_${tipper}`;
+}
+
+function loadAll() {
+  GROUPS.forEach(g => {
+    g.matches.forEach(match => {
+      // load scores
+      const scoreVal = localStorage.getItem(`score_${match.id}`);
+      if (scoreVal) {
+        const si = document.getElementById(`score_${match.id}`);
+        if (si) si.value = scoreVal;
+      }
+      // load tips
+      TIPPERS.forEach(tipper => {
+        const key = storageKey(match.id, tipper);
+        const val = localStorage.getItem(key);
+        if (val) {
+          const input = document.getElementById(`tip_${match.id}_${tipper}`);
+          if (input) {
+            input.value = val;
+            input.classList.add('filled');
+          }
+        }
+      });
+    });
+  });
+  updateStats();
+}
+
+function handleScoreInput(input) {
+  let v = input.value.replace(/[^0-9:]/g, '');
+  input.value = v;
+  if (v) localStorage.setItem(`score_${input.dataset.match}`, v);
+  else localStorage.removeItem(`score_${input.dataset.match}`);
+  updateStats();
+}
+
+function saveScores() {
+  GROUPS.forEach(g => {
+    g.matches.forEach(match => {
+      const si = document.getElementById(`score_${match.id}`);
+      if (si) {
+        const v = si.value.trim();
+        if (v) localStorage.setItem(`score_${match.id}`, v);
+        else localStorage.removeItem(`score_${match.id}`);
+      }
+    });
+  });
+  const banner = document.getElementById('saveBanner');
+  banner.textContent = '✓ Skóre uloženo';
+  banner.classList.add('show');
+  setTimeout(() => { banner.classList.remove('show'); banner.textContent = '✓ Tipy uloženy'; }, 2000);
+}
+
+function saveAll() {
+  GROUPS.forEach(g => {
+    g.matches.forEach(match => {
+      TIPPERS.forEach(tipper => {
+        const input = document.getElementById(`tip_${match.id}_${tipper}`);
+        if (input) {
+          const val = input.value.trim();
+          if (val) {
+            localStorage.setItem(storageKey(match.id, tipper), val);
+          } else {
+            localStorage.removeItem(storageKey(match.id, tipper));
+          }
+        }
+      });
+    });
+  });
+  const banner = document.getElementById('saveBanner');
+  banner.classList.add('show');
+  setTimeout(() => banner.classList.remove('show'), 2000);
+  updateStats();
+}
+
+function handleInput(input) {
+  // Najdi zápas a zkontroluj zamčení
+  const matchId = input.dataset.match;
+  const group = GROUPS.find(g => g.matches.find(m => m.id === matchId));
+  const match = group && group.matches.find(m => m.id === matchId);
+  if (match && isLocked(match)) {
+    input.value = localStorage.getItem(storageKey(matchId, input.dataset.tipper)) || '';
+    return;
+  }
+  let v = input.value.replace(/[^0-9:]/g, '');
+  input.value = v;
+  input.classList.toggle('filled', v.length > 0);
+  const key = storageKey(matchId, input.dataset.tipper);
+  if (v) localStorage.setItem(key, v);
+  else localStorage.removeItem(key);
+  updateStats();
+}
+
+function parseScore(s) {
+  if (!s) return null;
+  const parts = s.trim().split(':');
+  if (parts.length !== 2) return null;
+  const h = parseInt(parts[0]), a = parseInt(parts[1]);
+  if (isNaN(h) || isNaN(a)) return null;
+  return { h, a };
+}
+
+function getResult(score) {
+  if (score.h > score.a) return 'H';
+  if (score.h < score.a) return 'A';
+  return 'D';
+}
+
+function calcPoints(tipper) {
+  let exact = 0, result = 0;
+  GROUPS.forEach(g => {
+    g.matches.forEach(match => {
+      const actual = parseScore(localStorage.getItem(`score_${match.id}`));
+      if (!actual) return;
+      const tip = parseScore(localStorage.getItem(storageKey(match.id, tipper)));
+      if (!tip) return;
+      if (tip.h === actual.h && tip.a === actual.a) {
+        exact++;
+      } else if (getResult(tip) === getResult(actual)) {
+        result++;
+      }
+    });
+  });
+  return { exact, result, total: exact * 3 + result * 1 };
+}
+
+function updateStats() {
+  const scores = TIPPERS.map(tipper => ({ tipper, ...calcPoints(tipper) }));
+  scores.sort((a, b) => b.total - a.total || TIPPER_LABELS[a.tipper].localeCompare(TIPPER_LABELS[b.tipper], 'cs'));
+
+  const MEDALS = ['🥇', '🥈', '🥉'];
+  scores.forEach((s, i) => {
+    document.getElementById('lbe-' + i).className = 'lb-entry' + (i === 0 ? ' first-place' : '');
+    document.getElementById('lbm-' + i).textContent = MEDALS[i] || '';
+    document.getElementById('lbn-' + i).textContent = TIPPER_LABELS[s.tipper];
+    document.getElementById('lbd-' + i).innerHTML =
+      '<span class="gold">⭐ ' + s.exact + '× přesné = ' + (s.exact * 3) + ' b</span><br>' +
+      '<span class="blue">✓ ' + s.result + '× výsledek = ' + s.result + ' b</span>';
+    document.getElementById('lbp-' + i).innerHTML = s.total + '<small>b</small>';
+  });
+}
+
+// --- Init ---
+renderAll();
+loadAll();
+applyLocks();
+setInterval(applyLocks, 60 * 1000);
+</script>
+
+</body>
+</html>
