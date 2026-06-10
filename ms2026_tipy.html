@@ -229,20 +229,6 @@
 
     .btn-save:hover { opacity: 0.85; }
 
-    .btn-score {
-      background: linear-gradient(135deg, #2a6b4a, #1a4a32);
-      color: #7dda8a;
-      border: 1px solid #3d8a5a;
-      padding: 8px 20px;
-      border-radius: 8px;
-      font-weight: 700;
-      font-size: 0.85rem;
-      cursor: pointer;
-      transition: opacity 0.2s;
-      white-space: nowrap;
-    }
-
-    .btn-score:hover { opacity: 0.85; }
 
     thead th.score-col {
       text-align: center;
@@ -399,7 +385,6 @@
     <h1>MS 2026 – Tipovací tabulka</h1>
     <p>Skupinová fáze · USA, Kanada, Mexiko · 11.–27. června 2026</p>
   </div>
-  <button class="btn-score" id="btnFetch" onclick="fetchResults()" style="margin-left:auto">⬇️ Stáhnout výsledky</button>
 </header>
 
 <div class="save-banner" id="saveBanner">✓ Tipy uloženy</div>
@@ -953,6 +938,7 @@ renderAll();
 loadAll();
 applyLocks();
 setInterval(applyLocks, 60 * 1000);
+fetchResults();
 </script>
 
 </body>
