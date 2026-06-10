@@ -437,6 +437,11 @@
 </main>
 
 <script>
+const JSONBIN_URL = 'https://api.jsonbin.io/v3/b/6a2977b4da38895dfea71e0e';
+const JSONBIN_KEY = '$2a$10$uhW9uaveXGJq5zrJSy5g5u74z7ksPIAXLkMlyb9nFo88nOibOLHgW';
+let remoteScores = {};
+let saveDebounceTimer = null;
+
 const TIPPERS = ['mybike', 'pája', 'petr', 'honza'];
 const TIPPER_LABELS = { 'mybike': 'Mybike', 'pája': 'Pája', 'petr': 'Petr', 'honza': 'Honza' };
 
@@ -699,25 +704,47 @@ function storageKey(matchId, tipper) {
   return `ms2026_${matchId}_${tipper}`;
 }
 
+async function loadRemoteScores() {
+  try {
+    const res = await fetch(JSONBIN_URL + '/latest', {
+      headers: { 'X-Master-Key': JSONBIN_KEY }
+    });
+    const data = await res.json();
+    remoteScores = data.record.scores || {};
+    GROUPS.forEach(g => g.matches.forEach(match => {
+      const v = remoteScores[match.id];
+      if (v) {
+        const inp = document.getElementById(`score_${match.id}`);
+        if (inp) inp.value = v;
+      }
+    }));
+    updateStats();
+  } catch (e) {
+    showBanner('❌ Nepodařilo se načíst skóre ze serveru.');
+  }
+}
+
+async function pushRemoteScores() {
+  try {
+    await fetch(JSONBIN_URL, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'X-Master-Key': JSONBIN_KEY },
+      body: JSON.stringify({ scores: remoteScores })
+    });
+  } catch (e) {
+    showBanner('❌ Nepodařilo se uložit skóre na server.');
+  }
+}
+
 function loadAll() {
   GROUPS.forEach(g => {
     g.matches.forEach(match => {
-      // load scores
-      const scoreVal = localStorage.getItem(`score_${match.id}`);
-      if (scoreVal) {
-        const si = document.getElementById(`score_${match.id}`);
-        if (si) si.value = scoreVal;
-      }
-      // load tips
       TIPPERS.forEach(tipper => {
         const key = storageKey(match.id, tipper);
         const val = localStorage.getItem(key);
         if (val) {
           const input = document.getElementById(`tip_${match.id}_${tipper}`);
-          if (input) {
-            input.value = val;
-            input.classList.add('filled');
-          }
+          if (input) { input.value = val; input.classList.add('filled'); }
         }
       });
     });
@@ -728,26 +755,11 @@ function loadAll() {
 function handleScoreInput(input) {
   let v = input.value.replace(/[^0-9:]/g, '');
   input.value = v;
-  if (v) localStorage.setItem(`score_${input.dataset.match}`, v);
-  else localStorage.removeItem(`score_${input.dataset.match}`);
+  if (v) remoteScores[input.dataset.match] = v;
+  else delete remoteScores[input.dataset.match];
   updateStats();
-}
-
-function saveScores() {
-  GROUPS.forEach(g => {
-    g.matches.forEach(match => {
-      const si = document.getElementById(`score_${match.id}`);
-      if (si) {
-        const v = si.value.trim();
-        if (v) localStorage.setItem(`score_${match.id}`, v);
-        else localStorage.removeItem(`score_${match.id}`);
-      }
-    });
-  });
-  const banner = document.getElementById('saveBanner');
-  banner.textContent = '✓ Skóre uloženo';
-  banner.classList.add('show');
-  setTimeout(() => { banner.classList.remove('show'); banner.textContent = '✓ Tipy uloženy'; }, 2000);
+  clearTimeout(saveDebounceTimer);
+  saveDebounceTimer = setTimeout(pushRemoteScores, 800);
 }
 
 function saveAll() {
@@ -809,7 +821,7 @@ function calcPoints(tipper) {
   let exact = 0, result = 0;
   GROUPS.forEach(g => {
     g.matches.forEach(match => {
-      const actual = parseScore(localStorage.getItem(`score_${match.id}`));
+      const actual = parseScore(remoteScores[match.id] || null);
       if (!actual) return;
       const tip = parseScore(localStorage.getItem(storageKey(match.id, tipper)));
       if (!tip) return;
@@ -914,12 +926,13 @@ async function fetchResults() {
           if (m.home === homeCZ && m.away === awayCZ) {
             const inp = document.getElementById(`score_${m.id}`);
             if (inp) inp.value = scoreStr;
-            localStorage.setItem(`score_${m.id}`, scoreStr);
+            remoteScores[m.id] = scoreStr;
             updated++;
           }
         }));
       });
     }
+    if (updated > 0) await pushRemoteScores();
     showBanner(`✓ Staženo ${updated} výsledků`);
     updateStats();
   } catch (e) {
@@ -940,9 +953,9 @@ function showBanner(msg) {
 // --- Init ---
 renderAll();
 loadAll();
+loadRemoteScores().then(() => fetchResults());
 applyLocks();
 setInterval(applyLocks, 60 * 1000);
-fetchResults();
 </script>
 
 </body>
