@@ -155,6 +155,27 @@
       margin: 0 6px;
     }
 
+    td.match-teams .tipsport-link {
+      display: inline-block;
+      margin-left: 10px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: #e8a020;
+      background: #1e1400;
+      border: 1px solid #5a3a00;
+      border-radius: 4px;
+      padding: 1px 6px;
+      text-decoration: none;
+      vertical-align: middle;
+      white-space: nowrap;
+      transition: background 0.15s;
+    }
+
+    td.match-teams .tipsport-link:hover {
+      background: #2e1f00;
+      color: #ffc040;
+    }
+
     td.match-date {
       font-size: 0.8rem;
       color: #d0ddf0;
@@ -597,7 +618,7 @@ function buildTable(group) {
     tr.id = `row_${match.id}`;
     tr.innerHTML = `
       <td class="match-num">${group.name}${idx + 1}</td>
-      <td class="match-teams">${match.home}<span class="vs">vs</span>${match.away}</td>
+      <td class="match-teams">${match.home}<span class="vs">vs</span>${match.away}<a class="tipsport-link" href="https://www.tipsport.cz/vyhledavani?dotaz=${encodeURIComponent(match.home + ' ' + match.away)}" target="_blank" rel="noopener">📊 Tipsport</a></td>
       <td class="match-date">${match.date}<span class="match-time">${match.time}</span></td>
       <td class="score-cell">
         <input
