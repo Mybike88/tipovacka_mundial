@@ -440,6 +440,7 @@
 const JSONBIN_URL = 'https://api.jsonbin.io/v3/b/6a2977b4da38895dfea71e0e';
 const JSONBIN_KEY = '$2a$10$uhW9uaveXGJq5zrJSy5g5u74z7ksPIAXLkMlyb9nFo88nOibOLHgW';
 let remoteScores = {};
+let remoteTips = {};
 let saveDebounceTimer = null;
 
 const TIPPERS = ['mybike', 'pája', 'petr', 'honza'];
@@ -704,35 +705,41 @@ function storageKey(matchId, tipper) {
   return `ms2026_${matchId}_${tipper}`;
 }
 
-async function loadRemoteScores() {
+async function loadRemoteData() {
   try {
     const res = await fetch(JSONBIN_URL + '/latest', {
       headers: { 'X-Master-Key': JSONBIN_KEY }
     });
     const data = await res.json();
     remoteScores = data.record.scores || {};
+    remoteTips = data.record.tips || {};
     GROUPS.forEach(g => g.matches.forEach(match => {
       const v = remoteScores[match.id];
       if (v) {
         const inp = document.getElementById(`score_${match.id}`);
         if (inp) inp.value = v;
       }
+      TIPPERS.forEach(tipper => {
+        const tipVal = remoteTips[`${tipper}_${match.id}`];
+        const inp = document.getElementById(`tip_${match.id}_${tipper}`);
+        if (inp && tipVal) { inp.value = tipVal; inp.classList.add('filled'); }
+      });
     }));
     updateStats();
   } catch (e) {
-    showBanner('❌ Nepodařilo se načíst skóre ze serveru.');
+    showBanner('❌ Nepodařilo se načíst data ze serveru.');
   }
 }
 
-async function pushRemoteScores() {
+async function pushRemoteData() {
   try {
     await fetch(JSONBIN_URL, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json', 'X-Master-Key': JSONBIN_KEY },
-      body: JSON.stringify({ scores: remoteScores })
+      body: JSON.stringify({ scores: remoteScores, tips: remoteTips })
     });
   } catch (e) {
-    showBanner('❌ Nepodařilo se uložit skóre na server.');
+    showBanner('❌ Nepodařilo se uložit data na server.');
   }
 }
 
@@ -759,7 +766,7 @@ function handleScoreInput(input) {
   else delete remoteScores[input.dataset.match];
   updateStats();
   clearTimeout(saveDebounceTimer);
-  saveDebounceTimer = setTimeout(pushRemoteScores, 800);
+  saveDebounceTimer = setTimeout(pushRemoteData, 800);
 }
 
 function saveAll() {
@@ -785,21 +792,23 @@ function saveAll() {
 }
 
 function handleInput(input) {
-  // Najdi zápas a zkontroluj zamčení
   const matchId = input.dataset.match;
+  const tipper = input.dataset.tipper;
   const group = GROUPS.find(g => g.matches.find(m => m.id === matchId));
   const match = group && group.matches.find(m => m.id === matchId);
   if (match && isLocked(match)) {
-    input.value = localStorage.getItem(storageKey(matchId, input.dataset.tipper)) || '';
+    input.value = remoteTips[`${tipper}_${matchId}`] || '';
     return;
   }
   let v = input.value.replace(/[^0-9:]/g, '');
   input.value = v;
   input.classList.toggle('filled', v.length > 0);
-  const key = storageKey(matchId, input.dataset.tipper);
-  if (v) localStorage.setItem(key, v);
-  else localStorage.removeItem(key);
+  const tipKey = `${tipper}_${matchId}`;
+  if (v) remoteTips[tipKey] = v;
+  else delete remoteTips[tipKey];
   updateStats();
+  clearTimeout(saveDebounceTimer);
+  saveDebounceTimer = setTimeout(pushRemoteData, 800);
 }
 
 function parseScore(s) {
@@ -823,7 +832,7 @@ function calcPoints(tipper) {
     g.matches.forEach(match => {
       const actual = parseScore(remoteScores[match.id] || null);
       if (!actual) return;
-      const tip = parseScore(localStorage.getItem(storageKey(match.id, tipper)));
+      const tip = parseScore(remoteTips[`${tipper}_${match.id}`] || null);
       if (!tip) return;
       if (tip.h === actual.h && tip.a === actual.a) {
         exact++;
@@ -932,7 +941,7 @@ async function fetchResults() {
         }));
       });
     }
-    if (updated > 0) await pushRemoteScores();
+    if (updated > 0) await pushRemoteData();
     showBanner(`✓ Staženo ${updated} výsledků`);
     updateStats();
   } catch (e) {
@@ -952,8 +961,7 @@ function showBanner(msg) {
 
 // --- Init ---
 renderAll();
-loadAll();
-loadRemoteScores().then(() => fetchResults());
+loadRemoteData().then(() => fetchResults());
 applyLocks();
 setInterval(applyLocks, 60 * 1000);
 </script>
